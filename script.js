@@ -24,6 +24,23 @@ navigator.geolocation.getCurrentPosition(
     alert("Location access denied");
   }
 );
+map.on("click", async function (e) {
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+  );
+  const data = await res.json();
+
+  const address = data.display_name || "Address not found";
+
+  L.popup()
+    .setLatLng([lat, lng])
+    .setContent(address)
+    .openOn(map);
+});
+
 
 function startTracking() {
   path = [];
