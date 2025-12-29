@@ -1,7 +1,10 @@
 let tracking = false;
 let path = [];
+let checkpoints = [];
 let polyline;
 let watchId;
+let startTime;
+
 
 const map = L.map("map").setView([0, 0], 15);
 
@@ -24,8 +27,11 @@ navigator.geolocation.getCurrentPosition(
 
 function startTracking() {
   path = [];
+  checkpoints = [];
   tracking = true;
+  startTime = new Date().toISOString();
 
+  if (polyline) map.removeLayer(polyline);
   polyline = L.polyline(path, { color: "blue" }).addTo(map);
 
   watchId = navigator.geolocation.watchPosition(pos => {
@@ -33,24 +39,42 @@ function startTracking() {
 
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
-
     const point = [lat, lng];
+
     path.push(point);
     polyline.setLatLngs(path);
-
     map.setView(point);
   });
 }
 
+
 function addCheckpoint() {
   if (!path.length) return;
-  const last = path[path.length - 1];
-  L.marker(last).addTo(map);
+
+  const point = path[path.length - 1];
+  checkpoints.push(point);
+
+  L.marker(point).addTo(map);
 }
+
 
 function stopTracking() {
   tracking = false;
   navigator.geolocation.clearWatch(watchId);
+
+  const journey = {
+    id: Date.now(),
+    startTime,
+    endTime: new Date().toISOString(),
+    path,
+    checkpoints
+  };
+
+  let journeys = JSON.parse(localStorage.getItem("journeys")) || [];
+  journeys.push(journey);
+  localStorage.setItem("journeys", JSON.stringify(journeys));
+
   alert("Journey saved!");
 }
+
 
