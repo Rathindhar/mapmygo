@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Location Tracker</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="map"></div>
+  <div class="controls">
+  <button onclick="startTracking()">▶ Start</button>
+  <button onclick="addCheckpoint()">📍 Checkpoint</button>
+  <button onclick="stopTracking()">⏹ Stop</button>
+</div>
+
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>
