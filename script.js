@@ -6,16 +6,15 @@ let polyline = null;
 let watchId = null;
 let startTime = null;
 
-const map = L.map("map").setView([0, 0], 15);
+// Map setup
+const map = L.map("map").setView([0, 0], 16);
 
 L.tileLayer(
   "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  {
-    attribution: "© OpenStreetMap"
-  }
+  { attribution: "© OpenStreetMap" }
 ).addTo(map);
 
-// Initial location (ONLY for centering map)
+// Center map once
 navigator.geolocation.getCurrentPosition(
   pos => {
     map.setView([pos.coords.latitude, pos.coords.longitude], 16);
@@ -40,8 +39,9 @@ function distance(p1, p2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// START tracking
 function startTracking() {
-  if (tracking) return; // prevent double start
+  if (tracking) return;
 
   tracking = true;
   startTime = new Date().toISOString();
@@ -58,14 +58,19 @@ function startTracking() {
     pos => {
       if (!tracking) return;
 
-      const point = [pos.coords.latitude, pos.coords.longitude];
+      const point = [
+        pos.coords.latitude,
+        pos.coords.longitude
+      ];
 
+      // IMPORTANT: low threshold so it works while walking
       if (
         path.length === 0 ||
-        distance(path[path.length - 1], point) > 5
+        distance(path[path.length - 1], point) > 2
       ) {
         path.push(point);
         polyline.setLatLngs(path);
+        map.panTo(point);
       }
     },
     err => console.log(err),
@@ -77,6 +82,7 @@ function startTracking() {
   );
 }
 
+// ADD checkpoint
 function addCheckpoint() {
   if (!tracking || path.length === 0) return;
 
@@ -87,6 +93,7 @@ function addCheckpoint() {
   checkpointMarkers.push(marker);
 }
 
+// STOP tracking
 function stopTracking() {
   if (!tracking) return;
 
