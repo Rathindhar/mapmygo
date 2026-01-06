@@ -112,5 +112,5 @@ function stopTracking() {
   journeys.push(journey);
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
-  alert("Journey saved! and updated");
+  alert("Journey saved!");
 }
