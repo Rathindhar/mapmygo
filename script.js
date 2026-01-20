@@ -112,5 +112,5 @@ function stopTracking() {
   journeys.push(journey);
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
-  alert("Journey saved and re enquire it");
+  alert("Journey saved and revisit it");
 }
