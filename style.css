@@ -36,12 +36,7 @@ button {
   overflow-y: auto;
   z-index: 1000;
   border-radius: 6px;
-  font-size: 14px;
   width: 220px;
-}
-
-#routesPanel h3 {
-  margin: 0 0 6px 0;
 }
 
 #routesPanel ul {
@@ -60,8 +55,4 @@ button {
 
 #routesPanel li span {
   cursor: pointer;
-}
-
-#routesPanel li span:hover {
-  text-decoration: underline;
 }

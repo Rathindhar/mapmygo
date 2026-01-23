@@ -1,27 +1,23 @@
 let tracking = false;
 let path = [];
 let checkpoints = [];
-let checkpointMarkers = [];
 let polyline = null;
 let watchId = null;
-let startTime = null;
 
-let savedRouteLayers = [];
-let savedCheckpointMarkers = [];
+let replayLine = null;
+let replayTimer = null;
 
 // Map setup
 const map = L.map("map").setView([0, 0], 16);
 
-L.tileLayer(
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  { attribution: "© OpenStreetMap" }
-).addTo(map);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "© OpenStreetMap"
+}).addTo(map);
 
 // Center map once
-navigator.geolocation.getCurrentPosition(
-  pos => map.setView([pos.coords.latitude, pos.coords.longitude], 16),
-  () => alert("Location access denied")
-);
+navigator.geolocation.getCurrentPosition(pos => {
+  map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+});
 
 // Distance helper (meters)
 function distance(p1, p2) {
@@ -34,18 +30,19 @@ function distance(p1, p2) {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(p1[0])) *
-      Math.cos(toRad(p2[0])) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos(toRad(p2[0])) *
+    Math.sin(dLng / 2) ** 2;
 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 // START tracking
 function startTracking() {
-  if (tracking) return;
+  stopReplay();
 
+  if (tracking) return;
   tracking = true;
-  startTime = new Date().toISOString();
+
   path = [];
   checkpoints = [];
 
@@ -58,10 +55,7 @@ function startTracking() {
     pos => {
       if (!tracking) return;
 
-      const point = [
-        pos.coords.latitude,
-        pos.coords.longitude
-      ];
+      const point = [pos.coords.latitude, pos.coords.longitude];
 
       if (
         path.length === 0 ||
@@ -73,23 +67,14 @@ function startTracking() {
       }
     },
     err => console.log(err),
-    {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 10000
-    }
+    { enableHighAccuracy: true }
   );
 }
 
 // ADD checkpoint
 function addCheckpoint() {
   if (!tracking || path.length === 0) return;
-
-  const point = path[path.length - 1];
-  checkpoints.push(point);
-
-  const marker = L.marker(point).addTo(map);
-  checkpointMarkers.push(marker);
+  checkpoints.push(path[path.length - 1]);
 }
 
 // STOP tracking + SAVE
@@ -101,8 +86,6 @@ function stopTracking() {
 
   const journey = {
     id: Date.now(),
-    startTime,
-    endTime: new Date().toISOString(),
     path,
     checkpoints
   };
@@ -111,12 +94,12 @@ function stopTracking() {
   journeys.push(journey);
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
-  loadSavedRoutesList();
-  alert("Journey saved");
+  loadSavedRoutes();
+  alert("Route saved");
 }
 
-// LOAD ROUTE LIST
-function loadSavedRoutesList() {
+// LOAD ROUTES LIST
+function loadSavedRoutes() {
   const list = document.getElementById("routesList");
   list.innerHTML = "";
 
@@ -125,52 +108,54 @@ function loadSavedRoutesList() {
   journeys.forEach((journey, index) => {
     const li = document.createElement("li");
 
-    const title = document.createElement("span");
-    title.textContent =
-      `Route ${index + 1} — ` +
-      new Date(journey.startTime).toLocaleString();
-
-    title.onclick = () => showSavedRoute(journey);
+    const name = document.createElement("span");
+    name.textContent = "Route " + (index + 1);
+    name.onclick = () => replayRoute(journey);
 
     const del = document.createElement("button");
     del.textContent = "🗑️";
     del.style.border = "none";
     del.style.background = "transparent";
+
     del.onclick = e => {
       e.stopPropagation();
       deleteRoute(index);
     };
 
-    li.appendChild(title);
+    li.appendChild(name);
     li.appendChild(del);
     list.appendChild(li);
   });
 }
 
-// SHOW SELECTED ROUTE
-function showSavedRoute(journey) {
-  savedRouteLayers.forEach(l => map.removeLayer(l));
-  savedCheckpointMarkers.forEach(m => map.removeLayer(m));
+// REPLAY ROUTE (ANIMATED)
+function replayRoute(journey) {
+  stopReplay();
+  if (polyline) map.removeLayer(polyline);
 
-  savedRouteLayers = [];
-  savedCheckpointMarkers = [];
-
-  const line = L.polyline(journey.path, {
-    color: "#555",
-    weight: 5
+  replayLine = L.polyline([], {
+    color: "#ff5722",
+    weight: 6
   }).addTo(map);
 
-  savedRouteLayers.push(line);
-
-  journey.checkpoints.forEach(p => {
-    const m = L.marker(p).addTo(map);
-    savedCheckpointMarkers.push(m);
-  });
-
-  map.fitBounds(line.getBounds());
+  let i = 0;
+  replayTimer = setInterval(() => {
+    if (i >= journey.path.length) {
+      stopReplay();
+      return;
+    }
+    replayLine.addLatLng(journey.path[i]);
+    map.panTo(journey.path[i]);
+    i++;
+  }, 400);
 }
 
-// DELETE ROUTE
+function stopReplay() {
+  if (replayTimer) clearInterval(replayTimer);
+  replayTimer = null;
+}
+
+// DELETE ONE ROUTE
 function deleteRoute(index) {
   let journeys = JSON.parse(localStorage.getItem("journeys")) || [];
   if (!journeys[index]) return;
@@ -180,14 +165,9 @@ function deleteRoute(index) {
   journeys.splice(index, 1);
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
-  savedRouteLayers.forEach(l => map.removeLayer(l));
-  savedCheckpointMarkers.forEach(m => map.removeLayer(m));
-
-  savedRouteLayers = [];
-  savedCheckpointMarkers = [];
-
-  loadSavedRoutesList();
+  if (replayLine) map.removeLayer(replayLine);
+  loadSavedRoutes();
 }
 
 // INIT
-loadSavedRoutesList();
+loadSavedRoutes();
