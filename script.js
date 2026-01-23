@@ -6,6 +6,9 @@ let polyline = null;
 let watchId = null;
 let startTime = null;
 
+let savedRouteLayers = [];
+let savedCheckpointMarkers = [];
+
 // Map setup
 const map = L.map("map").setView([0, 0], 16);
 
@@ -16,9 +19,7 @@ L.tileLayer(
 
 // Center map once
 navigator.geolocation.getCurrentPosition(
-  pos => {
-    map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-  },
+  pos => map.setView([pos.coords.latitude, pos.coords.longitude], 16),
   () => alert("Location access denied")
 );
 
@@ -45,7 +46,6 @@ function startTracking() {
 
   tracking = true;
   startTime = new Date().toISOString();
-
   path = [];
   checkpoints = [];
 
@@ -63,7 +63,6 @@ function startTracking() {
         pos.coords.longitude
       ];
 
-      // IMPORTANT: low threshold so it works while walking
       if (
         path.length === 0 ||
         distance(path[path.length - 1], point) > 2
@@ -93,7 +92,7 @@ function addCheckpoint() {
   checkpointMarkers.push(marker);
 }
 
-// STOP tracking
+// STOP tracking + SAVE
 function stopTracking() {
   if (!tracking) return;
 
@@ -112,5 +111,83 @@ function stopTracking() {
   journeys.push(journey);
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
-  alert("Journey saved and dont come");
+  loadSavedRoutesList();
+  alert("Journey saved");
 }
+
+// LOAD ROUTE LIST
+function loadSavedRoutesList() {
+  const list = document.getElementById("routesList");
+  list.innerHTML = "";
+
+  const journeys = JSON.parse(localStorage.getItem("journeys")) || [];
+
+  journeys.forEach((journey, index) => {
+    const li = document.createElement("li");
+
+    const title = document.createElement("span");
+    title.textContent =
+      `Route ${index + 1} — ` +
+      new Date(journey.startTime).toLocaleString();
+
+    title.onclick = () => showSavedRoute(journey);
+
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.style.border = "none";
+    del.style.background = "transparent";
+    del.onclick = e => {
+      e.stopPropagation();
+      deleteRoute(index);
+    };
+
+    li.appendChild(title);
+    li.appendChild(del);
+    list.appendChild(li);
+  });
+}
+
+// SHOW SELECTED ROUTE
+function showSavedRoute(journey) {
+  savedRouteLayers.forEach(l => map.removeLayer(l));
+  savedCheckpointMarkers.forEach(m => map.removeLayer(m));
+
+  savedRouteLayers = [];
+  savedCheckpointMarkers = [];
+
+  const line = L.polyline(journey.path, {
+    color: "#555",
+    weight: 5
+  }).addTo(map);
+
+  savedRouteLayers.push(line);
+
+  journey.checkpoints.forEach(p => {
+    const m = L.marker(p).addTo(map);
+    savedCheckpointMarkers.push(m);
+  });
+
+  map.fitBounds(line.getBounds());
+}
+
+// DELETE ROUTE
+function deleteRoute(index) {
+  let journeys = JSON.parse(localStorage.getItem("journeys")) || [];
+  if (!journeys[index]) return;
+
+  if (!confirm("Delete this route?")) return;
+
+  journeys.splice(index, 1);
+  localStorage.setItem("journeys", JSON.stringify(journeys));
+
+  savedRouteLayers.forEach(l => map.removeLayer(l));
+  savedCheckpointMarkers.forEach(m => map.removeLayer(m));
+
+  savedRouteLayers = [];
+  savedCheckpointMarkers = [];
+
+  loadSavedRoutesList();
+}
+
+// INIT
+loadSavedRoutesList();

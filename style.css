@@ -19,6 +19,49 @@ html, body {
 }
 
 button {
-  padding: 10px 15px;
-  font-size: 16px;
+  padding: 10px 14px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+#routesPanel {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: white;
+  padding: 10px;
+  max-height: 45vh;
+  overflow-y: auto;
+  z-index: 1000;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 220px;
+}
+
+#routesPanel h3 {
+  margin: 0 0 6px 0;
+}
+
+#routesPanel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#routesPanel li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+}
+
+#routesPanel li span {
+  cursor: pointer;
+}
+
+#routesPanel li span:hover {
+  text-decoration: underline;
 }

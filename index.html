@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Location Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <link
     rel="stylesheet"
@@ -12,15 +13,19 @@
 <body>
 
   <div id="map"></div>
-  <div class="controls">
-  <button onclick="startTracking()">▶ Start</button>
-  <button onclick="addCheckpoint()">📍 Checkpoint</button>
-  <button onclick="stopTracking()">⏹ Stop</button>
-</div>
 
+  <div class="controls">
+    <button onclick="startTracking()">▶ Start</button>
+    <button onclick="addCheckpoint()">📍 Checkpoint</button>
+    <button onclick="stopTracking()">⏹ Stop</button>
+  </div>
+
+  <div id="routesPanel">
+    <h3>Saved Routes</h3>
+    <ul id="routesList"></ul>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="script.js"></script>
-
 </body>
 </html>
