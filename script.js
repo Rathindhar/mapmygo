@@ -95,7 +95,7 @@ function stopTracking() {
   localStorage.setItem("journeys", JSON.stringify(journeys));
 
   loadSavedRoutes();
-  alert("Route saved");
+  alert("Routes saved successfully");
 }
 
 // LOAD ROUTES LIST
