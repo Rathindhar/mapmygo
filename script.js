@@ -160,7 +160,7 @@ function deleteRoute(index) {
   let journeys = JSON.parse(localStorage.getItem("journeys")) || [];
   if (!journeys[index]) return;
 
-  if (!confirm("Delete this route?")) return;
+  if (!confirm("Delete this route or not?")) return;
 
   journeys.splice(index, 1);
   localStorage.setItem("journeys", JSON.stringify(journeys));
